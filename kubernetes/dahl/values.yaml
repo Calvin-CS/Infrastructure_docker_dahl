@@ -1,0 +1,6 @@
+image:
+  name: machines/dahl
+  registry: registry-1.docker.io
+  tag: latest
+dns:
+  name: calvin.edu

@@ -1,0 +1,40 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: dahl-{{ default "staging" .Release.Namespace }}-nginx-config
+  labels:
+    tier: backend
+data:
+  config: |
+      server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+        
+        # Set nginx to serve files from the shared volume!
+        root /var/www/html;
+        server_name _;
+
+        location ~ /\.ht {
+          deny all;
+        }
+
+        location ~ \.(php|inc)$ {
+          root /var/www/html;
+          try_files $uri =404;
+          fastcgi_split_path_info ^(.+\.php)(/.+)$;
+          fastcgi_pass dahl-{{ default "staging" .Release.Namespace }}-php:9000;
+          fastcgi_index index.php;
+          fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+          fastcgi_param PATH_INFO $fastcgi_path_info;
+          fastcgi_ignore_client_abort on;
+          fastcgi_connect_timeout     30s;
+          fastcgi_read_timeout        30s;
+          fastcgi_send_timeout        60s;
+          include fastcgi_params;
+        }
+
+        location / {
+          autoindex on;
+          try_files $uri $uri/ =404;
+        }
+      }

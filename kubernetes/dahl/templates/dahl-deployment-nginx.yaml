@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dahl-{{ default "staging" .Release.Namespace }}-nginx
+  labels:
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dahl-{{ default "staging" .Release.Namespace }}-nginx
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: dahl-{{ default "staging" .Release.Namespace }}-nginx
+        tier: backend
+    spec:
+      volumes:
+      - name: webroot
+        nfs:
+          path: /calvincsaks/csweb/dahl
+          server: calvincsaks.file.core.windows.net
+      - name: config
+        configMap:
+          name: dahl-{{ default "staging" .Release.Namespace }}-nginx-config
+          items:
+          - key: config
+            path: site.conf
+      containers:
+      - name: dahl-{{ default "staging" .Release.Namespace }}-nginx
+        image: nginx:stable
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /var/www/html
+          name: webroot
+          readOnly: true
+        - mountPath: /etc/nginx/conf.d
+          name: config
